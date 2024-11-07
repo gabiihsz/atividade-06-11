@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Tarefas</title>
-    <link rel="stylesheet" href="stye.css"> <!-- Corrigido o nome do arquivo CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <header>
         <h1>Cadastro de Tarefas</h1>
@@ -15,26 +17,26 @@
             </ul>
         </nav>
     </header>
-    <main>
-        <form action="" method="post">
-            <label for="titulo">Título da Tarefa:</label><br/>
-            <input type="text" id="titulo" name="titulo" required><br/>
-            <label for="descricao">Descrição:</label><br/>
-            <textarea id="descricao" name="descricao" required></textarea><br/><br/>
 
-            <!-- Botão para Inserir -->
+    <main>
+        <form action="" method="post" id="formTarefa">
+            <label for="titulo">Título da Tarefa:</label><br />
+            <input type="text" id="titulo" name="titulo" required><br />
+            <label for="descricao">Descrição:</label><br />
+            <textarea id="descricao" name="descricao" required></textarea><br /><br />
+
             <input type="submit" name="acao" value="Inserir">
         </form>
 
         <?php
         // Configurações do banco de dados
-        $host = 'localhost'; 
-        $db = 'db_gereciamentos'; 
-        $user = 'usuarios'; 
+        $host = 'localhost';
+        $dbname = 'db_gereciamentos';
+        $username = 'root';
 
         // Conexão com o banco de dados
         try {
-            $conn = new PDO("mysql:host=$host;dbname=$db", $user);
+            $conn = new PDO("mysql:host=$host;dbname=$dbname", $username);
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
             die("Erro na conexão: " . $e->getMessage());
@@ -45,25 +47,44 @@
             $acao = $_POST['acao'];
             $titulo = $_POST['titulo'] ?? '';
             $descricao = $_POST['descricao'] ?? '';
-            $setor = $_POST['setor'] ?? '';
+
             if ($acao === 'Inserir') {
-                // Lógica para inserir a tarefa no banco de dados
                 try {
                     $stmt = $conn->prepare("INSERT INTO tarefas (titulo, descricao) VALUES (:titulo, :descricao)");
                     $stmt->bindParam(':titulo', $titulo);
                     $stmt->bindParam(':descricao', $descricao);
-                    $stmt->bindParam(':setor', $setor);
+
                     if ($stmt->execute()) {
-                        echo "<p>Tarefa '$titulo' cadastrada com sucesso!</p>";
+                        echo "<p class='success'>Tarefa '$titulo' cadastrada com sucesso!</p>";
                     } else {
-                        echo "<p>Erro ao cadastrar a tarefa.</p>";
+                        echo "<p class='error'>Erro ao cadastrar a tarefa.</p>";
                     }
                 } catch (PDOException $e) {
-                    echo "<p>Erro ao executar a consulta: " . $e->getMessage() . "</p>";
+                    echo "<p class='error'>Erro ao executar a consulta: " . $e->getMessage() . "</p>";
                 }
             }
+        }
+
+        // Exibir tarefas cadastradas
+        try {
+            $stmt = $conn->query("SELECT * FROM tarefas ORDER BY id DESC");
+            $tarefas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($tarefas) {
+                echo "<h2>Tarefas Cadastradas:</h2>";
+                echo "<ul>";
+                foreach ($tarefas as $tarefa) {
+                    echo "<li><strong>" . htmlspecialchars($tarefa['titulo']) . "</strong>: " . htmlspecialchars($tarefa['descricao']) . "</li>";
+                }
+                echo "</ul>";
+            } else {
+                echo "<p>Nenhuma tarefa cadastrada ainda.</p>";
+            }
+        } catch (PDOException $e) {
+            echo "<p class='error'>Erro ao buscar tarefas: " . $e->getMessage() . "</p>";
         }
         ?>
     </main>
 </body>
+
 </html>

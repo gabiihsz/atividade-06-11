@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Sistema de Gerenciamento</title>
-    <link rel="stylesheet" href="stye.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 

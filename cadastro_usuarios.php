@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Usuários</title>
-    <link rel="stylesheet" href="stye.css"> <!-- Corrigido aqui -->
+    <link rel="stylesheet" href="style.css"> <!-- Corrigido aqui -->
 </head>
 <body>
     <header>
@@ -27,18 +27,37 @@
         </form>
 
         <?php
-        // Aqui você pode processar a ação com base no botão pressionado
+        // Iniciar sessão para armazenar as tarefas
+        session_start();
+
+        // Se a sessão de tarefas não existir, inicializá-la como um array vazio
+        if (!isset($_SESSION['tarefas'])) {
+            $_SESSION['tarefas'] = [];
+        }
+
+        // Processar a ação de inserir
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $acao = $_POST['acao'];
             $nome = $_POST['nome'] ?? '';
             $email = $_POST['email'] ?? '';
 
             if ($acao === 'Inserir') {
-                // Lógica para inserir o usuário no banco de dados
+                // Adicionar o usuário à sessão
+                $_SESSION['tarefas'][] = ['nome' => $nome, 'email' => $email];
                 echo "<p>Usuário '$nome' cadastrado com sucesso!</p>";
             } else {
                 echo "<p>Ação não reconhecida.</p>";
             }
+        }
+
+        // Exibir a lista de usuários cadastrados
+        if (count($_SESSION['tarefas']) > 0) {
+            echo "<h2>Usuários Cadastrados:</h2>";
+            echo "<ul>";
+            foreach ($_SESSION['tarefas'] as $tarefa) {
+                echo "<li><strong>" . htmlspecialchars($tarefa['nome']) . "</strong> - " . htmlspecialchars($tarefa['email']) . "</li>";
+            }
+            echo "</ul>";
         }
         ?>
     </main>
