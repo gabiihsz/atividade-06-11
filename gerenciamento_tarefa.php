@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciamento de Tarefas</title>
-    <link rel="stylesheet" href="style.css"> <!-- Corrigido o nome do arquivo CSS -->
+    <link rel="stylesheet" href="style.css"> <!-- Link para arquivo CSS externo -->
 </head>
 <body>
     <header>
@@ -17,19 +17,6 @@
     </header>
     <main>
         <form action="" method="post">
-            <label for="titulo">Título da Tarefa:</label><br/>
-            <input type="text" id="titulo" name="titulo" required><br/>
-
-            <label for="descricao">Descrição:</label><br/>
-            <textarea id="descricao" name="descricao" required></textarea><br/><br/>
-
-            <label for="status">Status da Tarefa:</label><br/>
-            <select id="status" name="status" required>
-                <option value="Em andamento">Em andamento</option>
-                <option value="Concluída">Concluída</option>
-                <option value="Pendente">Pendente</option>
-            </select><br/><br/>
-
             <!-- Botões para ações -->
             <input type="submit" name="acao" value="Inserir">
             <input type="submit" name="acao" value="Alterar">
@@ -38,34 +25,19 @@
         </form>
 
         <?php
-        // Configurações do banco de dados
-        $host = 'localhost'; 
-        $dbname = 'db_gereciamentos'; // Correção para o nome correto da variável
-        $username = 'root'; // Usuário root
-        $password = ''; // Sem senha, conforme solicitado
+        // Configurações do banco de dados (db_gereciamentos)
+        $host = 'localhost';
+        $dbname = 'db_gereciamentos';
+        $username = 'root';
+        $password = '';
 
         try {
             // Conexão com o banco de dados usando PDO
             $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            echo "Erro na conexão: " . $e->getMessage();
-            die(); // Para a execução do código em caso de falha na conexão
-        }
-
-        // Criar a tabela tarefas caso não exista
-        $createTableSQL = "CREATE TABLE IF NOT EXISTS tarefas (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            titulo VARCHAR(255) NOT NULL,
-            descricao TEXT NOT NULL,
-            status ENUM('Em andamento', 'Concluída', 'Pendente') NOT NULL
-        )";
-
-        // Executa o SQL para criar a tabela
-        try {
-            $conn->exec($createTableSQL);
-        } catch (PDOException $e) {
-            echo "Erro ao criar a tabela: " . $e->getMessage();
+            echo "<p>Erro na conexão com o banco: " . $e->getMessage() . "</p>";
+            die();
         }
 
         // Processamento do formulário
@@ -78,44 +50,44 @@
 
             switch ($acao) {
                 case 'Inserir':
-                    // Lógica para inserir a tarefa no banco de dados
-                    $stmt = $conn->prepare("INSERT INTO tarefas (titulo, descricao, status) VALUES (:titulo, :descricao, :status)");
-                    $stmt->bindParam(':titulo', $titulo);
-                    $stmt->bindParam(':descricao', $descricao);
-                    $stmt->bindParam(':status', $status);
-                    
-                    if ($stmt->execute()) {
-                        echo "<p>Tarefa '$titulo' cadastrada com sucesso!</p>";
+                    if (!empty($titulo) && !empty($descricao) && !empty($status)) {
+                        $stmt = $conn->prepare("INSERT INTO tbl_tarefas (tar_setor, tar_prioridade, tar_descricao, tar_status, usu_codigo) VALUES (:setor, :prioridade, :descricao, :status, :usu_codigo)");
+                        $stmt->bindParam(':setor', $titulo);
+                        $stmt->bindParam(':prioridade', 'Média'); // Exemplo de prioridade fixa
+                        $stmt->bindParam(':descricao', $descricao);
+                        $stmt->bindParam(':status', $status);
+                        $stmt->bindParam(':usu_codigo', 1); // Exemplo de código de usuário fixo
+                        if ($stmt->execute()) {
+                            echo "<p>Tarefa '$titulo' cadastrada com sucesso!</p>";
+                        } else {
+                            echo "<p>Erro ao cadastrar a tarefa.</p>";
+                        }
                     } else {
-                        echo "<p>Erro ao cadastrar a tarefa.</p>";
+                        echo "<p>Preencha todos os campos obrigatórios!</p>";
                     }
                     break;
 
                 case 'Alterar':
-                    // Lógica para alterar a tarefa no banco de dados
-                    if ($id) {
-                        $stmt = $conn->prepare("UPDATE tarefas SET titulo = :titulo, descricao = :descricao, status = :status WHERE id = :id");
-                        $stmt->bindParam(':titulo', $titulo);
+                    if ($id && !empty($titulo) && !empty($descricao) && !empty($status)) {
+                        $stmt = $conn->prepare("UPDATE tbl_tarefas SET tar_setor = :setor, tar_descricao = :descricao, tar_status = :status WHERE tar_codigo = :id");
+                        $stmt->bindParam(':setor', $titulo);
                         $stmt->bindParam(':descricao', $descricao);
                         $stmt->bindParam(':status', $status);
                         $stmt->bindParam(':id', $id);
-                        
                         if ($stmt->execute()) {
                             echo "<p>Tarefa com ID '$id' alterada com sucesso!</p>";
                         } else {
                             echo "<p>Erro ao alterar a tarefa.</p>";
                         }
                     } else {
-                        echo "<p>Por favor, forneça um ID para alterar.</p>";
+                        echo "<p>Preencha todos os campos e forneça um ID válido para alterar.</p>";
                     }
                     break;
 
                 case 'Excluir':
-                    // Lógica para excluir a tarefa do banco de dados
                     if ($id) {
-                        $stmt = $conn->prepare("DELETE FROM tarefas WHERE id = :id");
+                        $stmt = $conn->prepare("DELETE FROM tbl_tarefas WHERE tar_codigo = :id");
                         $stmt->bindParam(':id', $id);
-                        
                         if ($stmt->execute()) {
                             echo "<p>Tarefa com ID '$id' excluída com sucesso!</p>";
                         } else {
@@ -127,18 +99,16 @@
                     break;
 
                 case 'Consultar':
-                    // Lógica para consultar a tarefa no banco de dados
                     if ($id) {
-                        $stmt = $conn->prepare("SELECT * FROM tarefas WHERE id = :id");
+                        $stmt = $conn->prepare("SELECT * FROM tbl_tarefas WHERE tar_codigo = :id");
                         $stmt->bindParam(':id', $id);
                         $stmt->execute();
-                        
                         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                             echo "<h3>Tarefa Encontrada:</h3>";
-                            echo "<strong>ID:</strong> " . htmlspecialchars($row['id']) . "<br/>";
-                            echo "<strong>Título:</strong> " . htmlspecialchars($row['titulo']) . "<br/>";
-                            echo "<strong>Descrição:</strong> " . htmlspecialchars($row['descricao']) . "<br/>";
-                            echo "<strong>Status:</strong> " . htmlspecialchars($row['status']) . "<br/>";
+                            echo "<strong>ID:</strong> " . htmlspecialchars($row['tar_codigo']) . "<br/>";
+                            echo "<strong>Título:</strong> " . htmlspecialchars($row['tar_setor']) . "<br/>";
+                            echo "<strong>Descrição:</strong> " . htmlspecialchars($row['tar_descricao']) . "<br/>";
+                            echo "<strong>Status:</strong> " . htmlspecialchars($row['tar_status']) . "<br/>";
                         } else {
                             echo "<p>Tarefa com ID '$id' não encontrada.</p>";
                         }
@@ -153,25 +123,40 @@
             }
         }
 
-        // Exibir todas as tarefas cadastradas
-        echo "<h2>Todas as Tarefas:</h2>";
-        $stmt = $conn->query("SELECT * FROM tarefas");
-        $tarefas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Exibição de tarefas
+        echo "<h2>Usuários e Tarefas:</h2>";
+        $query = "
+            SELECT 
+                u.usu_nome AS usuario,
+                t.tar_codigo AS codigo_tarefa,
+                t.tar_setor AS setor,
+                t.tar_prioridade AS prioridade,
+                t.tar_descricao AS descricao,
+                t.tar_status AS status
+            FROM tbl_usuarios u
+            LEFT JOIN tbl_tarefas t ON u.usu_codigo = t.usu_codigo
+            ORDER BY u.usu_nome, t.tar_codigo";
 
-        if ($tarefas) {
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($dados) {
             echo "<table border='1'>";
-            echo "<tr><th>ID</th><th>Título</th><th>Descrição</th><th>Status</th></tr>";
-            foreach ($tarefas as $tarefa) {
+            echo "<tr><th>Usuário</th><th>ID Tarefa</th><th>Setor</th><th>Prioridade</th><th>Descrição</th><th>Status</th></tr>";
+            foreach ($dados as $linha) {
                 echo "<tr>";
-                echo "<td>" . htmlspecialchars($tarefa['id']) . "</td>";
-                echo "<td>" . htmlspecialchars($tarefa['titulo']) . "</td>";
-                echo "<td>" . htmlspecialchars($tarefa['descricao']) . "</td>";
-                echo "<td>" . htmlspecialchars($tarefa['status']) . "</td>";
+                echo "<td>" . htmlspecialchars($linha['usuario']) . "</td>";
+                echo "<td>" . htmlspecialchars($linha['codigo_tarefa']) . "</td>";
+                echo "<td>" . htmlspecialchars($linha['setor']) . "</td>";
+                echo "<td>" . htmlspecialchars($linha['prioridade']) . "</td>";
+                echo "<td>" . htmlspecialchars($linha['descricao']) . "</td>";
+                echo "<td>" . htmlspecialchars($linha['status']) . "</td>";
                 echo "</tr>";
             }
             echo "</table>";
         } else {
-            echo "<p>Não há tarefas cadastradas.</p>";
+            echo "<p>Nenhuma tarefa encontrada.</p>";
         }
         ?>
     </main>
